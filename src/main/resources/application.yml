@@ -1,92 +1,64 @@
 server:
-  port: 8088
-
+  port: 8080
 ---
 
 spring:
   profiles: default
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
   cloud:
-    gateway:
-      routes:
-        - id: rental
-          uri: http://localhost:8081
-          predicates:
-            - Path=/carRentals/** 
-        - id: reservation
-          uri: http://localhost:8082
-          predicates:
-            - Path=/carReservations/** 
-        - id: payment
-          uri: http://localhost:8083
-          predicates:
-            #- Path=/payments/**,/paymentCancellations/**
-            - Path=/payments/**
-        - id: view
-          uri: http://localhost:8084
-          predicates:
-            - Path= /myPages/**,/carInformations/**
-        - id: management
-          uri: http://localhost:8085
-          predicates:
-            - Path=/carManagements/**
-        - id: comment
-          uri: http://localhost:8086
-          predicates:
-            - Path=/comments/**
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOrigins:
-              - "*"
-            allowedMethods:
-              - "*"
-            allowedHeaders:
-              - "*"
-            allowCredentials: true
+    stream:
+      kafka:
+        binder:
+          brokers: localhost:9092
+        streams:
+          binder:
+            configuration:
+              default:
+                key:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                value:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+      bindings:
+        event-in:
+          group: view
+          destination: carrental
+          contentType: application/json
+        event-out:
+          destination: carrental
+          contentType: application/json
 
-
+logging:
+  level:
+    org.hibernate.type: trace
+    org.springframework.cloud: debug
+server:
+  port: 8084
 ---
 
 spring:
   profiles: docker
   cloud:
-    gateway:
-      routes:
-        - id: rental
-          uri: http://rental:8080
-          predicates:
-            - Path=/carRentals/** 
-        - id: reservation
-          uri: http://reservation:8080
-          predicates:
-            - Path=/carReservations/** 
-        - id: payment
-          uri: http://payment:8080
-          predicates:
-            #- Path=/payments/**,/paymentCancellations/**
-            - Path=/payments/**
-        - id: view
-          uri: http://view:8080
-          predicates:
-            - Path= /myPages/**,/carInformations/**
-        - id: management
-          uri: http://management:8080
-          predicates:
-            - Path=/carManagements/**
-        - id: comment
-          uri: http://comment:8080
-          predicates:
-            - Path=/comments/**
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOrigins:
-              - "*"
-            allowedMethods:
-              - "*"
-            allowedHeaders:
-              - "*"
-            allowCredentials: true
-
-server:
-  port: 8080
+    stream:
+      kafka:
+        binder:
+          brokers: my-kafka.kafka.svc.cluster.local:9092
+        streams:
+          binder:
+            configuration:
+              default:
+                key:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                value:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+      bindings:
+        event-in:
+          group: view
+          destination: carrental
+          contentType: application/json
+        event-out:
+          destination: carrental
+          contentType: application/json
